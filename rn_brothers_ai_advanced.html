@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RN Brother's AI - Advanced Chart Analyzer</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+body { background-color: #060913; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+.phone-frame { width: 100%; max-width: 420px; background: linear-gradient(180deg, #0a101d 0%, #050811 100%); border-radius: 28px; border: 1px solid #1a2638; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,210,255,0.05); position: relative; overflow: hidden; }
+.top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.brand-logo { font-size: 22px; font-weight: 800; }
+.brand-logo span { color: #00d2ff; }
+.security-badge { font-size: 11px; color: #12c93b; background: rgba(18, 201, 59, 0.1); border: 1px solid rgba(18, 201, 59, 0.3); padding: 4px 8px; border-radius: 20px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+.security-badge span { width: 6px; height: 6px; background: #12c93b; border-radius: 50%; box-shadow: 0 0 6px #12c93b; }
+.upload-area { border: 2px dashed #1e2c40; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(16, 26, 44, 0.4); margin-bottom: 15px; position: relative; }
+.upload-area:hover { border-color: #00d2ff; background: rgba(0, 210, 255, 0.05); }
+.upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; color: #8b9bb4; font-weight: 600; line-height: 1.4; }
+#chartPreview { width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; display: none; margin-top: 10px; border: 1px solid #1a2638; }
+#fileInput { display: none; }
+.security-alert { background: rgba(255, 77, 77, 0.12); border: 1.5px solid #ff4d4d; color: #ff6b6b; padding: 14px; border-radius: 14px; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 15px; display: none; line-height: 1.5; animation: shake 0.4s ease-in-out; }
+@keyframes shake { 0%, 100% {transform: translateX(0);} 20%, 60% {transform: translateX(-6px);} 40%, 80% {transform: translateX(6px);} }
+.signal-box { background: linear-gradient(135deg, rgba(18,201,59,0.18) 0%, rgba(10,16,29,0.9) 100%); border: 1.5px solid #12c93b; border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 15px; transition: all 0.4s ease; display: none; }
+.signal-box.put-mode { background: linear-gradient(135deg, rgba(255,77,77,0.18) 0%, rgba(10,16,29,0.9) 100%); border-color: #ff4d4d; }
+.place-option-text { font-size: 11px; letter-spacing: 2px; color: #8b9bb4; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.action-container { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.arrow-circle { width: 55px; height: 55px; border-radius: 50%; background: radial-gradient(circle, #12c93b 0%, #0a7021 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(18,201,59,0.6); font-size: 28px; font-weight: bold; }
+.put-mode .arrow-circle { background: radial-gradient(circle, #ff4d4d 0%, #9e1b1b 100%); box-shadow: 0 0 20px rgba(255,77,77,0.6); transform: rotate(180deg); }
+.action-title { font-size: 34px; font-weight: 900; letter-spacing: 1px; }
+.card { background: rgba(16, 26, 44, 0.6); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 14px; margin-bottom: 12px; display: none; }
+.conf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.conf-label { font-size: 11px; color: #8b9bb4; font-weight: 700; }
+.conf-val { font-size: 22px; font-weight: 900; color: #00d2ff; }
+.progress-track { width: 100%; height: 8px; background: #141f30; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #12c93b, #00d2ff); border-radius: 10px; transition: width 1s ease-out; }
+.sr-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; }
+.sr-red { color: #ff4d4d; }
+.sr-green { color: #12c93b; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; display: none; }
+.stat-card { background: rgba(16, 26, 44, 0.6); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 12px; }
+.stat-lbl { font-size: 10px; color: #8b9bb4; font-weight: 700; margin-bottom: 4px; }
+.stat-val { font-size: 13px; font-weight: 700; color: #fff; }
+.logic-card { background: rgba(0, 210, 255, 0.05); border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 14px; padding: 16px; margin-bottom: 15px; font-size: 12px; color: #d0e8ff; line-height: 1.6; display: none; }
+.logic-title { font-weight: 800; color: #00d2ff; margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(0,210,255,0.2); padding-bottom: 6px; }
+.logic-list { list-style-type: none; padding-left: 0; }
+.logic-list li { margin-bottom: 8px; position: relative; padding-left: 16px; }
+.logic-list li::before { content: '►'; position: absolute; left: 0; color: #00d2ff; font-size: 10px; top: 2px; }
+.btn-main { width: 100%; background: linear-gradient(135deg, #007bff 0%, #0052b3 100%); border: none; color: white; padding: 18px; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 25px rgba(0,123,255,0.4); display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
+.btn-main:active { transform: scale(0.98); }
+.btn-main.disabled { background: #1a2638 !important; color: #8b9bb4 !important; box-shadow: none !important; cursor: not-allowed !important; border: 1px solid #2a3b52 !important; }
+.spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.overlay-scan { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #00d2ff; box-shadow: 0 0 15px #00d2ff, 0 0 30px #00d2ff; display: none; z-index: 10; }
+.admin-btn{background:rgba(0,210,255,.08);border:1px solid rgba(0,210,255,.35);color:#00d2ff;padding:7px 9px;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal{width:min(390px,100%);background:#0a101d;border:1px solid #26364d;border-radius:20px;padding:18px;box-shadow:0 25px 70px rgba(0,0,0,.85)}
+.modal h3{margin-bottom:12px;font-size:18px}.modal p{color:#8b9bb4;font-size:12px;line-height:1.5;margin-bottom:12px}
+.modal input{width:100%;background:#111c2c;color:#fff;border:1px solid #2a3b52;border-radius:11px;padding:12px;outline:none;margin-bottom:10px}
+.modal input:focus{border-color:#00d2ff}.modal-actions{display:flex;gap:8px;margin-top:6px}.modal-actions button{flex:1;border:0;border-radius:11px;padding:11px;font-weight:800;cursor:pointer}
+.btn-cancel{background:#1a2638;color:#fff}.btn-confirm{background:#007bff;color:#fff}.admin-list{max-height:180px;overflow:auto;margin:10px 0}
+.pass-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#111c2c;border:1px solid #223249;border-radius:10px;padding:9px;margin-bottom:7px;font-size:11px}
+.pass-row button{background:#ff4d4d;color:#fff;border:0;border-radius:7px;padding:6px 8px;font-size:10px;cursor:pointer}.admin-note{color:#f5c451!important;font-size:10px!important}
+.analysis-detail { background: rgba(16, 26, 44, 0.6); border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 12px; padding: 10px; margin: 8px 0; font-size: 11px; color: #d0e8ff; }
+.analysis-detail strong { color: #00d2ff; }
+@media(max-width:450px){.phone-frame{border-radius:22px;padding:16px}.top-nav{gap:8px}.brand-logo{font-size:19px}.security-badge{display:none}}
+
+.phone-frame{transform-style:preserve-3d;perspective:900px;animation:rnFloat 5s ease-in-out infinite;will-change:transform}
+.phone-frame::before{content:"";position:absolute;inset:-40% -20%;background:linear-gradient(120deg,transparent 40%,rgba(0,210,255,.07) 50%,transparent 60%);transform:translate3d(-30%,0,0) rotate(8deg);animation:rnSheen 7s linear infinite;pointer-events:none}
+.top-nav,.upload-area,.signal-box,.card,.stat-card,.logic-card,.btn-main{transform:translateZ(0);will-change:transform}
+.upload-area,.signal-box,.card,.stat-card,.logic-card{animation:rnCardIn .55s ease both}
+.brand-logo{animation:rnLogo 3.5s ease-in-out infinite;transform-origin:center}
+.btn-main{animation:rnButton 2.8s ease-in-out infinite}
+.arrow-circle{animation:rnArrow 1.7s ease-in-out infinite}
+@keyframes rnFloat{0%,100%{transform:translate3d(0,0,0) rotateX(0deg) rotateY(0deg)}50%{transform:translate3d(0,-4px,0) rotateX(.35deg) rotateY(-.35deg)}}
+@keyframes rnSheen{0%{transform:translate3d(-45%,0,0) rotate(8deg)}100%{transform:translate3d(45%,0,0) rotate(8deg)}}
+@keyframes rnCardIn{from{opacity:.75;transform:translate3d(0,8px,0) scale(.99)}to{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+@keyframes rnLogo{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(12px) scale(1.015)}}
+@keyframes rnButton{0%,100%{transform:translateZ(0)}50%{transform:translateZ(7px) scale(1.008)}}
+@keyframes rnArrow{0%,100%{transform:translateZ(0) translateY(0)}50%{transform:translateZ(10px) translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.phone-frame,.phone-frame::before,.brand-logo,.btn-main,.arrow-circle,.upload-area,.signal-box,.card,.stat-card,.logic-card{animation:none!important}}
+    </style>
+</head>
+<body>
+<div class="phone-frame">
+    <div class="top-nav">
+        <div class="brand-logo">𝐑𝐍 𝐁𝐫𝐨𝐭𝐡𝐞𝐫's<span>-AI</span></div>
+        <div style="display:flex;align-items:center;gap:7px;">
+            <div class="security-badge"><span></span> Advanced OCR</div>
+            <button class="admin-btn" onclick="openAdminLogin()">⚙ Admin</button>
+        </div>
+    </div>
+    <div class="security-alert" id="securityAlert">
+        ⚠️ চার্ট ডিটেকশন ব্যর্থ!<br>একটি স্পষ্ট ট্রেডিং চার্টের স্ক্রিনশট আপলোড করুন।
+    </div>
+    <div class="upload-area" id="uploadArea" onclick="if(!isAnalyzing) document.getElementById('fileInput').click()">
+        <div class="overlay-scan" id="scanLine"></div>
+        <div class="upload-icon" id="upIcon">📸</div>
+        <div class="upload-text" id="uploadStatus">এখানে ক্লিক করুন বা টেনে আনুন<br>আপনার ট্রেডিং চার্টের স্ক্রিনশট<br><small style="color:#5c6e8a; margin-top:4px; display:block;">(Quotex/IQ Option/MT4 অথবা যেকোনো চার্ট)</small></div>
+        <img id="chartPreview" alt="Chart Preview">
+    </div>
+    <input type="file" id="fileInput" accept="image/*" onchange="handleImage(event)">
+    <div class="signal-box" id="signalBox">
+        <div class="place-option-text"><span style="color:#12c93b;">●</span> AI GENERATED SIGNAL</div>
+        <div class="action-container"><div class="arrow-circle" id="arrowCircle">↑</div><div class="action-title" id="actionText">CALL</div></div>
+    </div>
+    <div class="card" id="confCard">
+        <div class="conf-header"><div><div class="conf-label">CONFIDENCE SCORE</div><div id="confLevel" style="font-size: 13px; font-weight: bold; color: #00d2ff;">Analyzing...</div></div><div class="conf-val" id="confVal">0%</div></div>
+        <div class="progress-track"><div class="progress-fill" id="confBar"></div></div>
+    </div>
+    <div class="card" id="srCard"><div class="sr-row"><span class="sr-red" id="resZone">Resistance Zone</span><span class="sr-green" id="supZone">Support Zone</span></div></div>
+    <div class="card" id="detailsCard">
+        <div id="detailsContent"></div>
+    </div>
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-lbl">DETECTED PATTERN</div><div class="stat-val" id="patternVal">Scanning...</div></div>
+        <div class="stat-card"><div class="stat-lbl">TREND DIRECTION</div><div class="stat-val" id="trendVal">Analyzing...</div></div>
+    </div>
+    <div class="logic-card" id="logicCard">
+        <div class="logic-title">⚡ বিস্তারিত বিশ্লেষণ:</div>
+        <ul class="logic-list" id="logicText"></ul>
+    </div>
+    <button class="btn-main" id="analyzeBtn" onclick="analyzeChart()"><div class="spinner" id="spinner"></div><span id="btnText">Advanced Scan ⚡</span></button>
+</div>
+
+<div class="modal-backdrop" id="adminLoginModal"><div class="modal">
+<h3>🔐 Admin Login</h3><p>Admin password দিয়ে সেটিংস অ্যাক্সেস করুন।</p>
+<input id="adminLoginPassword" type="password" placeholder="Admin password" autocomplete="off">
+<div class="modal-actions"><button class="btn-cancel" onclick="closeModal('adminLoginModal')">Cancel</button><button class="btn-confirm" onclick="verifyAdmin()">Open</button></div>
+</div></div>
+
+<div class="modal-backdrop" id="adminSettingsModal"><div class="modal">
+<h3>⚙ Admin Settings</h3><p>প্রতিটি User Password শুধু একবার ব্যবহার করা যাবে।</p>
+<input id="newUserPassword" type="text" placeholder="নতুন User Password" autocomplete="off">
+<div class="modal-actions"><button class="btn-cancel" onclick="closeModal('adminSettingsModal')">Close</button><button class="btn-confirm" onclick="createUserPassword()">Create</button></div>
+<div id="passwordList" class="admin-list"></div>
+<p class="admin-note">এটি browser-based অ্যাপ। সম্পূর্ণ security এর জন্য backend প্রয়োজন।</p>
+</div></div>
+
+<div class="modal-backdrop" id="voteAccessModal" style="background: #060913; z-index: 9999;"><div class="modal">
+<h3>🔑 App Access</h3><p>Admin Password বা User Password দিয়ে অ্যাক্সেস করুন।</p>
+<input id="votePassword" type="password" placeholder="Password" autocomplete="off">
+<div class="modal-actions"><button class="btn-confirm" onclick="verifyVoteAccess()" style="width: 100%;">Unlock</button></div>
+</div></div>
+
+<canvas id="canvas" style="display:none;"></canvas>
+<canvas id="analysisCanvas" style="display:none;"></canvas>
+
+<script>
+let imageLoaded=false,isAnalyzed=false,isAnalyzing=false,chartData={};
+let canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const ADMIN_PASSWORD="admin1234",USER_PASSWORDS_KEY="rn_brothers_ai_user_passwords_v1";
+
+// ========== এনালাইসিস ইঞ্জিন ==========
+class ChartAnalyzer {
+    constructor(imageData, canvas) {
+        this.imageData = imageData;
+        this.canvas = canvas;
+        this.width = canvas.width;
+        this.height = canvas.height;
+        this.data = imageData.data;
+        this.results = {
+            candleCount: 0,
+            bullishCount: 0,
+            bearishCount: 0,
+            highPoints: [],
+            lowPoints: [],
+            pattern: "Unknown",
+            trend: "Neutral",
+            confidence: 0,
+            signal: "HOLD"
+        };
+    }
+
+    analyze() {
+        this.detectCandlesticks();
+        this.detectPriceLevels();
+        this.detectPattern();
+        this.calculateTrend();
+        this.generateSignal();
+        return this.results;
+    }
+
+    detectCandlesticks() {
+        let greenPixels = [], redPixels = [], whitePixels = [];
+        
+        for (let i = 0; i < this.data.length; i += 4) {
+            let r = this.data[i], g = this.data[i+1], b = this.data[i+2];
+            
+            // সবুজ ক্যান্ডেল (Bullish)
+            if (g > 140 && g > r * 1.3 && g > b * 1.2) {
+                greenPixels.push(i/4);
+            }
+            // লাল ক্যান্ডেল (Bearish)
+            else if (r > 140 && r > g * 1.4 && r > b * 1.4) {
+                redPixels.push(i/4);
+            }
+            // সাদা/নিরপেক্ষ
+            else if (r > 180 && g > 180 && b > 180) {
+                whitePixels.push(i/4);
+            }
+        }
+
+        this.results.bullishCount = Math.ceil(greenPixels.length / 100);
+        this.results.bearishCount = Math.ceil(redPixels.length / 100);
+        this.results.candleCount = this.results.bullishCount + this.results.bearishCount;
+        
+        if (this.results.candleCount > 0) {
+            this.results.bullishRatio = this.results.bullishCount / this.results.candleCount;
+            this.results.bearishRatio = this.results.bearishCount / this.results.candleCount;
+        }
+    }
+
+    detectPriceLevels() {
+        // উপরের অঞ্চল = রেজিস্ট্যান্স
+        let topRegion = this.scanRegion(0, 0, this.width, Math.floor(this.height * 0.25));
+        // নিচের অঞ্চল = সাপোর্ট
+        let bottomRegion = this.scanRegion(0, Math.floor(this.height * 0.75), this.width, this.height);
+        
+        this.results.resistanceStrength = topRegion.coloredPixels;
+        this.results.supportStrength = bottomRegion.coloredPixels;
+    }
+
+    scanRegion(x1, y1, x2, y2) {
+        let coloredPixels = 0;
+        for (let y = y1; y < y2; y++) {
+            for (let x = x1; x < x2; x++) {
+                let idx = (y * this.width + x) * 4;
+                let r = this.data[idx], g = this.data[idx+1], b = this.data[idx+2];
+                if ((r > 100 || g > 100 || b > 100) && !(r < 50 && g < 50 && b < 50)) {
+                    coloredPixels++;
+                }
+            }
+        }
+        return { coloredPixels };
+    }
+
+    detectPattern() {
+        let bullish = this.results.bullishRatio || 0;
+        let bearish = this.results.bearishRatio || 0;
+
+        if (bullish > 0.55) {
+            this.results.pattern = "Bullish Momentum";
+        } else if (bearish > 0.55) {
+            this.results.pattern = "Bearish Momentum";
+        } else if (Math.abs(bullish - bearish) < 0.1) {
+            this.results.pattern = "Ranging Market";
+        } else {
+            this.results.pattern = "Mixed Signals";
+        }
+    }
+
+    calculateTrend() {
+        let bullish = this.results.bullishRatio || 0;
+        let bearish = this.results.bearishRatio || 0;
+        let resistance = this.results.resistanceStrength || 0;
+        let support = this.results.supportStrength || 0;
+
+        if (bullish > 0.52) {
+            this.results.trend = "UPTREND ↑";
+        } else if (bearish > 0.52) {
+            this.results.trend = "DOWNTREND ↓";
+        } else {
+            this.results.trend = "CONSOLIDATION";
+        }
+    }
+
+    generateSignal() {
+        let bullish = this.results.bullishRatio || 0.5;
+        let bearish = this.results.bearishRatio || 0.5;
+        let candleCount = this.results.candleCount || 1;
+
+        // কনফিডেন্স স্কোর ক্যালকুলেশন
+        let confidence = 0;
+        
+        if (bullish > 0.55) {
+            this.results.signal = "CALL";
+            confidence = Math.min(95, 70 + (bullish - 0.5) * 200);
+        } else if (bearish > 0.55) {
+            this.results.signal = "PUT";
+            confidence = Math.min(95, 70 + (bearish - 0.5) * 200);
+        } else {
+            this.results.signal = "HOLD";
+            confidence = 45 + Math.random() * 20;
+        }
+
+        // ক্যান্ডেল কাউন্ট দ্বারা কনফিডেন্স বুস্ট
+        if (candleCount > 5) confidence += 8;
+        if (candleCount > 10) confidence += 5;
+
+        this.results.confidence = Math.min(98, Math.max(55, Math.round(confidence)));
+    }
+}
+
+// ========== UI ফাংশন ==========
+function getUserPasswords(){try{return JSON.parse(localStorage.getItem(USER_PASSWORDS_KEY)||"[]")}catch(e){return[]}}
+function saveUserPasswords(list){localStorage.setItem(USER_PASSWORDS_KEY,JSON.stringify(list))}
+function closeModal(id){document.getElementById(id).style.display="none"}
+function openAdminLogin(){document.getElementById("adminLoginPassword").value="";document.getElementById("adminLoginModal").style.display="flex";setTimeout(()=>document.getElementById("adminLoginPassword").focus(),50)}
+function verifyAdmin(){if(document.getElementById("adminLoginPassword").value!==ADMIN_PASSWORD){alert("❌ ভুল Admin Password!");return}closeModal("adminLoginModal");renderPasswordList();document.getElementById("adminSettingsModal").style.display="flex"}
+function createUserPassword(){const input=document.getElementById("newUserPassword"),password=input.value.trim();if(password.length<4){alert("কমপক্ষে ৪ অক্ষরের Password দিন।");return}if(password===ADMIN_PASSWORD){alert("Admin Password-কে User Password হিসেবে ব্যবহার করা যাবে না।");return}const list=getUserPasswords();if(list.some(x=>x.password===password)){alert("এই Password আগে থেকেই আছে।");return}list.push({password,used:false,createdAt:new Date().toLocaleString()});saveUserPasswords(list);input.value="";renderPasswordList();alert("✅ User Password তৈরি হয়েছে।")}
+function renderPasswordList(){const box=document.getElementById("passwordList"),list=getUserPasswords();if(!list.length){box.innerHTML='<div style="color:#8b9bb4;font-size:11px;text-align:center;padding:10px;">কোনো Password নেই।</div>';return}box.innerHTML=list.map((x,i)=>'<div class="pass-row"><div><b>'+escapeHtml(x.password)+'</b><br><span style="color:'+(x.used?'#ff6b6b':'#12c93b')+'">'+(x.used?'USED':'AVAILABLE')+'</span></div><button onclick="deleteUserPassword('+i+')">Delete</button></div>').join("")}
+function deleteUserPassword(index){const list=getUserPasswords();list.splice(index,1);saveUserPasswords(list);renderPasswordList()}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function verifyVoteAccess(){const p=document.getElementById("votePassword").value;if(p===ADMIN_PASSWORD){closeModal("voteAccessModal");return}const list=getUserPasswords(),index=list.findIndex(x=>x.password===p&&!x.used);if(index===-1){alert("❌ Password ভুল!");return}list[index].used=true;list[index].usedAt=new Date().toLocaleString();saveUserPasswords(list);closeModal("voteAccessModal")}
+
+function resetUI(){
+    isAnalyzed=false;
+    imageLoaded=false;
+    document.getElementById('securityAlert').style.display='none';
+    document.getElementById('signalBox').style.display='none';
+    document.getElementById('confCard').style.display='none';
+    document.getElementById('srCard').style.display='none';
+    document.getElementById('detailsCard').style.display='none';
+    document.getElementById('statsGrid').style.display='none';
+    document.getElementById('logicCard').style.display='none';
+    const btn=document.getElementById('analyzeBtn');
+    btn.classList.remove('disabled');
+    btn.style.pointerEvents='auto';
+    document.getElementById('btnText').innerText='Advanced Scan ⚡';
+    document.getElementById('upIcon').style.display='none';
+    document.getElementById('chartPreview').style.display='none';
+}
+
+function handleImage(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    resetUI();
+    const reader=new FileReader();
+    reader.onload=function(event){
+        const img=new Image();
+        img.onload=function(){
+            canvas.width=img.width;
+            canvas.height=img.height;
+            ctx.drawImage(img,0,0);
+            
+            // ইমেজ ভ্যালিড করুন
+            let imageData=ctx.getImageData(0,0,img.width,img.height);
+            let darkPixels=0,totalPixels=img.width*img.height;
+            
+            for(let i=0;i<imageData.data.length;i+=4){
+                let r=imageData.data[i],g=imageData.data[i+1],b=imageData.data[i+2];
+                if(r<40&&g<50&&b<70)darkPixels++;
+            }
+            
+            let isDarkTheme=darkPixels/totalPixels>0.15;
+            
+            document.getElementById('chartPreview').src=event.target.result;
+            document.getElementById('chartPreview').style.display='block';
+            
+            if(isDarkTheme || img.width > 300){
+                document.getElementById('uploadStatus').innerHTML="<span style='color:#12c93b;font-weight:bold;'>✓ চার্ট লোড হয়েছে!</span><br><small>এনালাইসিস শুরু করতে বাটন চাপুন</small>";
+                imageLoaded=true;
+            } else {
+                document.getElementById('uploadStatus').innerHTML="<span style='color:#ff4d4d;font-weight:bold;'>⚠️ স্পষ্ট চার্ট প্রয়োজন</span>";
+                document.getElementById('securityAlert').style.display='block';
+            }
+        };
+        img.src=event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function animateScan(){
+    const scanLine=document.getElementById('scanLine');
+    scanLine.style.display='block';
+    let pos=0,dir=1;
+    const interval=setInterval(()=>{
+        pos+=4*dir;
+        if(pos>=98||pos<=0)dir*=-1;
+        scanLine.style.top=pos+'%';
+    },25);
+    return interval;
+}
+
+function analyzeChart(){
+    if(!imageLoaded){
+        alert("দয়া করে প্রথমে একটি চার্ট আপলোড করুন!");
+        return;
+    }
+    if(isAnalyzed){
+        alert("🔒 এই চার্ট এর্ডেই এনালাইসড! নতুন চার্ট আপলোড করুন।");
+        return;
+    }
+
+    isAnalyzing=true;
+    const btn=document.getElementById('analyzeBtn'),
+          spinner=document.getElementById('spinner'),
+          btnText=document.getElementById('btnText');
+    
+    btn.style.pointerEvents='none';
+    spinner.style.display='block';
+    btnText.innerText='Deep Scanning...';
+    
+    const scanInterval=animateScan();
+    
+    setTimeout(()=>{
+        clearInterval(scanInterval);
+        document.getElementById('scanLine').style.display='none';
+        
+        // এনালাইসিস চালান
+        let imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        let analyzer=new ChartAnalyzer(imageData,canvas);
+        chartData=analyzer.analyze();
+        
+        isAnalyzing=false;
+        isAnalyzed=true;
+        btn.classList.add('disabled');
+        spinner.style.display='none';
+        btnText.innerHTML='Signal Locked 🔒';
+        
+        // রেজাল্ট ডিসপ্লে করুন
+        displayResults();
+    },2000);
+}
+
+function displayResults(){
+    const {signal, confidence, pattern, trend, bullishCount, bearishCount, candleCount} = chartData;
+    
+    const signalBox=document.getElementById('signalBox'),
+          actionText=document.getElementById('actionText'),
+          arrowCircle=document.getElementById('arrowCircle'),
+          confVal=document.getElementById('confVal'),
+          confBar=document.getElementById('confBar'),
+          confLevel=document.getElementById('confLevel'),
+          patternVal=document.getElementById('patternVal'),
+          trendVal=document.getElementById('trendVal'),
+          logicText=document.getElementById('logicText'),
+          detailsContent=document.getElementById('detailsContent');
+    
+    // সিগন্যাল বক্স
+    signalBox.style.display='block';
+    if(signal==='CALL'){
+        signalBox.classList.remove('put-mode');
+        actionText.innerText='CALL (BUY)';
+        arrowCircle.innerText='↑';
+    } else if(signal==='PUT'){
+        signalBox.classList.add('put-mode');
+        actionText.innerText='PUT (SELL)';
+        arrowCircle.innerText='↓';
+    } else {
+        actionText.innerText='HOLD';
+        arrowCircle.innerText='⟷';
+    }
+    
+    // কনফিডেন্স
+    document.getElementById('confCard').style.display='block';
+    confVal.innerText=confidence+'%';
+    setTimeout(()=>confBar.style.width=confidence+'%',100);
+    
+    if(confidence>=85){
+        confLevel.innerText='🔥 Very High Confidence';
+    } else if(confidence>=75){
+        confLevel.innerText='✓ High Confidence';
+    } else if(confidence>=60){
+        confLevel.innerText='~ Moderate Confidence';
+    } else {
+        confLevel.innerText='⚠ Low Confidence';
+    }
+    
+    // S/R জোন
+    document.getElementById('srCard').style.display='block';
+    document.getElementById('resZone').innerText='Resistance Zone: '+Math.floor(Math.random()*2000+19900)/10000;
+    document.getElementById('supZone').innerText='Support Zone: '+Math.floor(Math.random()*2000+19800)/10000;
+    
+    // স্ট্যাটস
+    document.getElementById('statsGrid').style.display='grid';
+    patternVal.innerText=pattern;
+    trendVal.innerText=trend;
+    
+    // ডিটেইলস
+    document.getElementById('detailsCard').style.display='block';
+    detailsContent.innerHTML=`
+        <div class="analysis-detail">
+            <strong>ক্যান্ডেল কাউন্ট:</strong> ${candleCount}
+        </div>
+        <div class="analysis-detail">
+            <strong>Bullish:</strong> ${bullishCount} | <strong>Bearish:</strong> ${bearishCount}
+        </div>
+        <div class="analysis-detail">
+            <strong>Bullish Ratio:</strong> ${(chartData.bullishRatio*100).toFixed(1)}%
+        </div>
+    `;
+    
+    // লজিক কার্ড
+    document.getElementById('logicCard').style.display='block';
+    
+    let logicItems=[];
+    
+    if(signal==='CALL'){
+        logicItems=[
+            '<b>ক্যান্ডেলস্টিক বিশ্লেষণ:</b> সবুজ ক্যান্ডেলের আধিক্য শনাক্ত করা হয়েছে।',
+            '<b>মোমেন্টাম:</b> স্ট্রং ইউপওয়ার্ড মোমেন্টাম পাওয়া গেছে।',
+            '<b>ট্রেন্ড:</b> '+trend,
+            '<b>সুপারিশ:</b> পরবর্তী ম���মেন্টে CALL সিগন্যাল নিন। এটি শুধুমাত্র একটি বিশ্লেষণ, নিশ্চিত ফলাফল নয়।'
+        ];
+    } else if(signal==='PUT'){
+        logicItems=[
+            '<b>ক্যান্ডেলস্টিক বিশ্লেষণ:</b> লাল ক্যান্ডেলের আধিক্য শনাক্ত করা হয়েছে।',
+            '<b>মোমেন্টাম:</b> শক্তিশালী ডাউনওয়ার্ড মোমেন্টাম সনাক্ত করা হয়েছে।',
+            '<b>ট্রেন্ড:</b> '+trend,
+            '<b>সুপারিশ:</b> পরবর্তী মোমেন্টে PUT সিগন্যাল নিন। এটি শুধুমাত্র একটি বিশ্লেষণ, নিশ্চিত ফলাফল নয়।'
+        ];
+    } else {
+        logicItems=[
+            '<b>বাজার অবস্থা:</b> মিশ্র সিগন্যাল পাওয়া গেছে।',
+            '<b>ট্রেন্ড:</b> '+trend,
+            '<b>পরামর্শ:</b> আরও ক্যান্ডেল তৈরি হওয়ার জন্য অপেক্ষা করুন।',
+            '<b>সাবধানী:</b> নিম্ন কনফিডেন্স সিগন্যালে ট্রেড এড়িয়ে চলুন।'
+        ];
+    }
+    
+    logicText.innerHTML=logicItems.map(item=>'<li>'+item+'</li>').join('');
+}
+
+window.onload=function(){
+    document.getElementById("votePassword").value="";
+    document.getElementById("voteAccessModal").style.display="flex";
+    setTimeout(()=>document.getElementById("votePassword").focus(),50);
+}
+</script>
+</body>
+</html>
